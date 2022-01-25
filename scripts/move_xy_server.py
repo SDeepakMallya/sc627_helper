@@ -18,10 +18,10 @@ class MoveXY:
         self.epsilon_ang = 0.0872665 # 5 degrees
 
         self.a1 = 0.5
-        self.a2 = 0.05
+        self.a2 = 0.005
 
-        self.d1 = 1
-        self.d2 = 0.05
+        self.d1 = 0.1
+        self.d2 = 0.005
 
         self.bot_location = Pose2D()
         rospy.Subscriber('/odom', Odometry, self.callback_odom)
@@ -68,6 +68,9 @@ class MoveXY:
         err_ang_old = 0
         err_dist_old = 0
         err_head_old = 0
+        dist = False
+        ang = False
+        head = False
 
         while not success:
 
@@ -93,23 +96,30 @@ class MoveXY:
             
             self._as.publish_feedback(self._feedback)
 
-            if abs(err_dist) > self.epsilon_dist:
-                if abs(err_head) > self.epsilon_ang:
+            if abs(err_dist) > self.epsilon_dist and (not dist):
+                if abs(err_head) > self.epsilon_ang and (not head):
                     pub_msg = Twist()
                     pub_msg.linear.x = 0
                     pub_msg.angular.z = min(0.5, max(-0.5, self.a1 * err_head + self.a2 * (err_head - err_head_old) * 30))
-                    print('head')
+                    # print('head')
                 else:                       
                     pub_msg = Twist()
                     pub_msg.angular.z = 0
                     pub_msg.linear.x = max(0.1, self.d1 * err_dist, self.d2 * (err_dist - err_dist_old) * 30)
-                    print('dist')
+                    # print('dist')
 
-            elif abs(err_ang) > self.epsilon_ang:
+            elif abs(err_ang) > self.epsilon_ang and (not ang):
+                dist = True
+                head = True
                 pub_msg = Twist()
                 pub_msg.linear.x = 0
                 pub_msg.angular.z = min(0.5, max(-0.5, self.a1 * err_ang + self.a2 * (err_ang - err_ang_old) * 30))
-                print('ang')
+                # print('ang')
+            
+            else:
+                ang = True
+                dist = True
+                head = True
 
             self.cmd.publish(pub_msg)
             err_ang_old = err_ang
