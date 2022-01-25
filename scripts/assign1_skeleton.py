@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from sc627_helper.msg import MoveXYAction, MoveXYGoal, MoveXYResult
 import rospy
