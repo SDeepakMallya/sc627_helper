@@ -26,7 +26,7 @@ class MoveXY:
         self.bot_location = Pose2D()
         rospy.Subscriber('/odom', Odometry, self.callback_odom)
         self.cmd = rospy.Publisher('/cmd_vel', Twist, queue_size = 10)
-
+        self.ns = rospy.get_namespace()
         self._as = actionlib.SimpleActionServer("move_xy", MoveXYAction, self.callback_move, False)
         self._as.start()
         
@@ -65,13 +65,10 @@ class MoveXY:
     def callback_move(self, goal):
         r = rospy.Rate(30)
         success = False
-        err_ang_old = 0
-        err_dist_old = 0
-        err_head_old = 0
         dist = False
         ang = False
         head = False
-
+        direction = 1
         while not success:
 
             self._feedback.pose_mid = self.bot_location
@@ -79,7 +76,17 @@ class MoveXY:
             err_ang = self.ang_err(goal.pose_dest, self.bot_location)
             err_dist = self.dist_err(goal.pose_dest, self.bot_location)
             err_head = self.head_err(goal.pose_dest, self.bot_location)
+    
+            if err_head > math.pi/2:
+                err_head = - math.pi + err_head
+                direction = -1
+            elif err_head < -math.pi/2:
+                err_head =  math.pi + err_head
+                direction = -1
+            else:
+                direction = 1
 
+            print(self.ns, direction)
             if abs(err_ang) < self.epsilon_ang and err_dist < self.epsilon_dist:
                 success = True
                 pub_msg = Twist()
@@ -97,34 +104,24 @@ class MoveXY:
             self._as.publish_feedback(self._feedback)
 
             if abs(err_dist) > self.epsilon_dist and (not dist):
-                if abs(err_head) > self.epsilon_ang and (not head):
-                    pub_msg = Twist()
-                    pub_msg.linear.x = 0
-                    pub_msg.angular.z = min(0.5, max(-0.5, self.a1 * err_head + self.a2 * (err_head - err_head_old) * 30))
-                    # print('head')
-                else:                       
-                    pub_msg = Twist()
-                    pub_msg.angular.z = 0
-                    pub_msg.linear.x = max(0.1, self.d1 * err_dist, self.d2 * (err_dist - err_dist_old) * 30)
-                    # print('dist')
+                pub_msg = Twist()
+                pub_msg.linear.x = direction * 0.1
+                pub_msg.angular.z = min(0.5, max(-0.5, err_head))
 
             elif abs(err_ang) > self.epsilon_ang and (not ang):
                 dist = True
-                head = True
+                # head = True
                 pub_msg = Twist()
                 pub_msg.linear.x = 0
-                pub_msg.angular.z = min(0.5, max(-0.5, self.a1 * err_ang + self.a2 * (err_ang - err_ang_old) * 30))
+                pub_msg.angular.z = min(0.5, max(-0.5, err_ang))
                 # print('ang')
             
             else:
                 ang = True
                 dist = True
-                head = True
+                # head = True
 
             self.cmd.publish(pub_msg)
-            err_ang_old = err_ang
-            err_dist_old = err_dist
-            err_head_old = err_head
             r.sleep()
 
 

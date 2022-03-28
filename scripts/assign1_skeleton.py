@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from sc627_helper.msg import MoveXYAction, MoveXYGoal, MoveXYResult
 import rospy
@@ -7,7 +7,7 @@ import actionlib
 #import other helper files if any
 
 
-rospy.init_node('test', anonymous= True)
+rospy.init_node('assign1_skeleton', anonymous= True)
 
 #Initialize client
 client = actionlib.SimpleActionClient('move_xy', MoveXYAction)
@@ -15,7 +15,7 @@ client.wait_for_server()
 
 #read input file
 
-
+print('client')
 #setting result as initial location
 result = MoveXYResult()
 result.pose_final.x = 0
