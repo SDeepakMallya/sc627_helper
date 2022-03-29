@@ -17,12 +17,6 @@ class MoveXY:
         self.epsilon_dist = 3e-02 # 3 cm
         self.epsilon_ang = 0.0872665 # 5 degrees
 
-        self.a1 = 0.5
-        self.a2 = 0.005
-
-        self.d1 = 0.1
-        self.d2 = 0.005
-
         self.bot_location = Pose2D()
         rospy.Subscriber('/odom', Odometry, self.callback_odom)
         self.cmd = rospy.Publisher('/cmd_vel', Twist, queue_size = 10)
