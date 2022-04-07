@@ -15,7 +15,7 @@ class MoveXY:
         self._result = MoveXYResult()
 
         self.epsilon_dist = 3e-02 # 3 cm
-        self.epsilon_ang = 0.0872665 # 5 degrees
+        self.epsilon_ang = 0.02 # 0.0872665 # 5 degrees
 
         self.a1 = 0.5
         self.a2 = 0.005
@@ -60,6 +60,7 @@ class MoveXY:
             err -= 2 * math.pi
         if err < -math.pi:
             err += 2 * math.pi
+        # print(err)
         return err
 
     def callback_move(self, goal):
@@ -96,30 +97,27 @@ class MoveXY:
             
             self._as.publish_feedback(self._feedback)
 
-            if abs(err_dist) > self.epsilon_dist and (not dist):
-                if abs(err_head) > self.epsilon_ang and (not head):
+            if not dist: 
+
+                if not head:
                     pub_msg = Twist()
                     pub_msg.linear.x = 0
                     pub_msg.angular.z = min(0.5, max(-0.5, self.a1 * err_head + self.a2 * (err_head - err_head_old) * 30))
-                    # print('head')
-                else:                       
+                    head = abs(err_head) < self.epsilon_ang
+
+                else:
+
                     pub_msg = Twist()
                     pub_msg.angular.z = 0
                     pub_msg.linear.x = max(0.1, self.d1 * err_dist, self.d2 * (err_dist - err_dist_old) * 30)
-                    # print('dist')
+                    dist = abs(err_dist) < self.epsilon_dist
 
-            elif abs(err_ang) > self.epsilon_ang and (not ang):
-                dist = True
-                head = True
+            elif not ang:
+
                 pub_msg = Twist()
                 pub_msg.linear.x = 0
                 pub_msg.angular.z = min(0.5, max(-0.5, self.a1 * err_ang + self.a2 * (err_ang - err_ang_old) * 30))
-                # print('ang')
-            
-            else:
-                ang = True
-                dist = True
-                head = True
+                ang = abs(err_ang) < self.epsilon_ang
 
             self.cmd.publish(pub_msg)
             err_ang_old = err_ang
