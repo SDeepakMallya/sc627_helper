@@ -54,7 +54,7 @@ def callback_right_odom(data):
 rospy.init_node('assign4_skeleton', anonymous = True)
 rospy.Subscriber('/odom', Odometry, callback_odom) #topic name fixed
 rospy.Subscriber('/left_odom', Odometry, callback_left_odom) #topic name fixed
-rospy.Subscriber('/right_odom', Odometry, callback_left_odom) #topic name fixed
+rospy.Subscriber('/right_odom', Odometry, callback_right_odom) #topic name fixed
 
 pub_vel = rospy.Publisher('/cmd_vel', Twist, queue_size = 10)
 r = rospy.Rate(30)
